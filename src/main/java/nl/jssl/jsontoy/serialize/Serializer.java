@@ -1,7 +1,7 @@
 package nl.jssl.jsontoy.serialize;
 
 public class Serializer {
-    private static SerializerFactory instance = new SynthSerializerFactory();
+    private static SynthSerializerFactory instance = new SynthSerializerFactory();
 
     public static String toJSONString(boolean b) {
         return Boolean.toString(b);
@@ -28,7 +28,7 @@ public class Serializer {
     }
 
     public static String toJSONString(char c) {
-        return "\"" + Character.toString(c) + "\"";
+        return "\"" + c + "\"";
     }
 
     @SuppressWarnings("unchecked")
@@ -39,7 +39,5 @@ public class Serializer {
         return instance.createSerializer((Class<T>) o.getClass()).toJSONString(o);
     }
 
-    public static void setInstance(SerializerFactory instance) {
-        Serializer.instance = instance;
-    }
+
 }

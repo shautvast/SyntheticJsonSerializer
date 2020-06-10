@@ -17,7 +17,7 @@ import javassist.CtNewMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 
-public class SynthSerializerFactory implements SerializerFactory {
+class SynthSerializerFactory {
     private static final String STRING = "java.lang.String";
     private static final String BOOLEAN = "java.lang.Boolean";
     private static final String CHARACTER = "java.lang.Character";
@@ -28,7 +28,7 @@ public class SynthSerializerFactory implements SerializerFactory {
     private static final String SHORT = "java.lang.Short";
     private static final String INTEGER = "java.lang.Integer";
 
-    private final static Set<String> wrappersAndString = new HashSet<String>(Arrays.asList(BOOLEAN, CHARACTER, BYTE, DOUBLE, FLOAT, LONG, SHORT, INTEGER,
+    private final static Set<String> wrappersAndString = new HashSet<>(Arrays.asList(BOOLEAN, CHARACTER, BYTE, DOUBLE, FLOAT, LONG, SHORT, INTEGER,
             STRING));
 
     private static final String COLLECTION = "java.util.Collection";
@@ -41,7 +41,7 @@ public class SynthSerializerFactory implements SerializerFactory {
 
     private final ClassPool pool = ClassPool.getDefault();
     private CtClass serializerBase;
-    private final Map<String, CtClass> primitiveWrappers = new HashMap<String, CtClass>();
+
 
     public SynthSerializerFactory() {
         init();
@@ -50,34 +50,23 @@ public class SynthSerializerFactory implements SerializerFactory {
     void init() {
         try {
             serializerBase = pool.get(JSONSerializer.class.getName());
-
-            primitiveWrappers.put("int", pool.get(INTEGER));
-            primitiveWrappers.put("short", pool.get(SHORT));
-            primitiveWrappers.put("byte", pool.get(BYTE));
-            primitiveWrappers.put("long", pool.get(LONG));
-            primitiveWrappers.put("float", pool.get(FLOAT));
-            primitiveWrappers.put("double", pool.get(DOUBLE));
-            primitiveWrappers.put("boolean", pool.get(BOOLEAN));
-            primitiveWrappers.put("char", pool.get(CHARACTER));
         } catch (NotFoundException e) {
             throw new SerializerCreationException(e);
         }
     }
 
-    public <T> JSONSerializer<T> createSerializer(Class<T> beanjavaClass) {
+     <T> JSONSerializer<T> createSerializer(Class<T> beanjavaClass) {
         try {
             CtClass beanClass = pool.get(beanjavaClass.getName());
 
-            JSONSerializer<T> jsonSerializer = createSerializer(beanClass);
-
-            return jsonSerializer;
+            return createSerializer2(beanClass);
         } catch (NotFoundException e) {
             throw new SerializerCreationException(e);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T> JSONSerializer<T> createSerializer(CtClass beanClass) {
+    private <T> JSONSerializer<T> createSerializer2(CtClass beanClass) {
         if (serializers.containsKey(createSerializerName(beanClass))) {
             return (JSONSerializer<T>) serializers.get(createSerializerName(beanClass));
         }
@@ -201,11 +190,11 @@ public class SynthSerializerFactory implements SerializerFactory {
     }
 
     public String createSerializerName(String name) {
-        return ROOT_PACKAGE + name.replaceAll("\\[\\]", "Array") + "Serializer";
+        return ROOT_PACKAGE + name.replaceAll("\\[]", "Array") + "Serializer";
     }
 
     private boolean isCollection(CtClass beanClass) throws NotFoundException {
-        List<CtClass> interfaces = new ArrayList<CtClass>(Arrays.asList(beanClass.getInterfaces()));
+        List<CtClass> interfaces = new ArrayList<>(Arrays.asList(beanClass.getInterfaces()));
         interfaces.add(beanClass);
         for (CtClass interfaze : interfaces) {
             if (interfaze.getName().equals(COLLECTION) || interfaze.getName().equals(LIST) || interfaze.getName().equals(SET)) {
@@ -216,7 +205,7 @@ public class SynthSerializerFactory implements SerializerFactory {
     }
 
     private boolean isMap(CtClass beanClass) throws NotFoundException {
-        List<CtClass> interfaces = new ArrayList<CtClass>(Arrays.asList(beanClass.getInterfaces()));
+        List<CtClass> interfaces = new ArrayList<>(Arrays.asList(beanClass.getInterfaces()));
         interfaces.add(beanClass);
         for (CtClass interfaze : interfaces) {
             if (interfaze.getName().equals(MAP)) {
@@ -284,7 +273,7 @@ public class SynthSerializerFactory implements SerializerFactory {
      * Retrieves getter methods from a class
      */
     private List<CtMethod> getGetters(CtClass beanClass) {
-        List<CtMethod> methods = new ArrayList<CtMethod>();
+        List<CtMethod> methods = new ArrayList<>();
         List<CtField> fields = getAllFields(beanClass);
         for (CtField field : fields) {
             try {
@@ -305,10 +294,7 @@ public class SynthSerializerFactory implements SerializerFactory {
 
     private List<CtField> getAllFields(CtClass beanClass) {
         try {
-            List<CtField> allfields = new ArrayList<>();
-            for (CtField field : beanClass.getDeclaredFields()) {
-                allfields.add(field);
-            }
+            List<CtField> allfields = new ArrayList<>(Arrays.asList(beanClass.getDeclaredFields()));
             if (beanClass.getSuperclass() != null) {
                 return getAllFields(beanClass.getSuperclass(), allfields);
             }
@@ -320,9 +306,7 @@ public class SynthSerializerFactory implements SerializerFactory {
     }
 
     private List<CtField> getAllFields(CtClass beanClass, List<CtField> allfields) {
-        for (CtField field : beanClass.getDeclaredFields()) {
-            allfields.add(field);
-        }
+        allfields.addAll(Arrays.asList(beanClass.getDeclaredFields()));
 
         return allfields;
     }
@@ -368,7 +352,7 @@ public class SynthSerializerFactory implements SerializerFactory {
     }
 
     String innerClassName(String name) {
-        return "L" + name.replaceAll("\\.", "/").replaceAll("\\[\\]", "");
+        return "L" + name.replaceAll("\\.", "/").replaceAll("\\[]", "");
     }
 
     static boolean isPrimitiveOrWrapperOrString(CtClass beanClass) {
